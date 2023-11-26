@@ -84,7 +84,7 @@
             <table class="topbar">
                 <tr>
                     <td class="home">
-                      <a href="./store.php">Ryan's Market</a>
+                      <a href="./store.php" class="home">Ryan's Market</a>
                     </td>
                 </tr>
             </table>
