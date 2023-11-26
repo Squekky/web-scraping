@@ -8,14 +8,39 @@ productDescription = ""
 productPrice = ""
 productImage = ""
 productRating = ""
+productNum = sys.argv[1][0] + sys.argv[1].split('.')[0].split('/')[1]
 
 vendor = sys.argv[2]
 document = xml.dom.minidom.parse(sys.argv[1])
-productNum = sys.argv[1][0] + sys.argv[1].split('.')[0].split('/')[1]
-print(f"Product Num: {productNum}")
-if vendor == "kohls":
-    print("Vendor: Kohls")
 
+def getDescription(parentNode, vendor):
+    global productDescription
+    if parentNode.nodeType == parentNode.ELEMENT_NODE and parentNode.hasAttribute('class') and parentNode.getAttribute('class') == "seemoreParentDiv":
+        return
+    if parentNode.nodeType == parentNode.TEXT_NODE and vendor not in parentNode.nodeValue.upper():
+        productDescription += parentNode.nodeValue
+    elif parentNode.hasChildNodes():
+        if parentNode.nodeType == parentNode.ELEMENT_NODE:
+            attrList = parentNode.attributes
+            attrs=""
+            for index in range(attrList.length):
+                attrs += f" {attrList.item(index).name}=\"{attrList.item(index).value}\""
+            #print(f"Tag: <{parentNode.tagName}{attrs}>")
+            productDescription += f"<{parentNode.tagName}{attrs}>"
+        for node in parentNode.childNodes:
+            getDescription(node, vendor)
+        if parentNode.nodeType == parentNode.ELEMENT_NODE:
+            #print(f"Tag: </{parentNode.tagName}>")
+            productDescription += f"</{parentNode.tagName}>"
+    elif parentNode.nodeType == parentNode.ELEMENT_NODE: # Self-closing tags
+        attrList = parentNode.attributes
+        attrs=""
+        for index in range(attrList.length):
+            attrs += f" {attrList.item(index).name}=\"{attrList.item(index).value}\""
+        #print(f"Tag: <{parentNode.tagName}{attrs}/>")
+        productDescription += f"<{parentNode.tagName}{attrs}/>"
+
+if vendor == "kohls":
     # Product Title
     headerElements = document.getElementsByTagName('h1')
     for header in headerElements:
@@ -28,38 +53,8 @@ if vendor == "kohls":
     divElements = document.getElementsByTagName('div')
     for div in divElements:
         if div.hasAttribute('id') and div.getAttribute('id') == "productDetailsTabContent" and div.hasChildNodes():
-            for childDiv in div.getElementsByTagName('div'):
-                if childDiv.hasAttribute('class') and childDiv.getAttribute('class') == "inner" and childDiv.hasChildNodes():
-                    for node in childDiv.childNodes:
-                        # If there is plain text, add it to the description
-                        if node.nodeType == node.TEXT_NODE:
-                            productDescription += node.nodeValue
-                        # Check for tags
-                        elif node.nodeType == node.ELEMENT_NODE:
-                            # Add line breaks
-                            if node.tagName == "br":
-                                productDescription += "<br>"
-                            # Check for any lists
-                            elif node.tagName in ["ul", "ol"]:
-                                listElements = node.getElementsByTagName('li')
-                                productDescription += f"<{node.tagName}>"
-                                # Iterate through over list items
-                                for listItem in listElements:
-                                    if listItem.hasChildNodes() and listItem.nodeType == listItem.ELEMENT_NODE and listItem.tagName == "li":
-                                        # Iterate over each list item
-                                        for innerNode in listItem.childNodes:
-                                            productDescription += "<li>"
-                                            # Add text to product description
-                                            if innerNode.nodeType == innerNode.TEXT_NODE:
-                                                productDescription += innerNode.nodeValue
-                                            productDescription += "</li>"
-                                productDescription += f"</{node.tagName}>"  
-                            elif node.tagName == "p" and node.hasChildNodes():
-                                content = node.childNodes[0]
-                                if (content.nodeType == node.TEXT_NODE):
-                                    productDescription += content.nodeValue
-            if productDescription != "":
-                break
+            getDescription(div, "KOHL")
+            break
     # Product Price
     spanElements = document.getElementsByTagName('span')
     for span in spanElements:
@@ -92,8 +87,6 @@ if vendor == "kohls":
             break
 
 elif vendor == "dillards":
-    print("Vendor: Dillards")
-
     # Product Title & Price
     spanElements = document.getElementsByTagName('span')
     for span in spanElements:
@@ -123,42 +116,8 @@ elif vendor == "dillards":
     # Product Description & Rating
     divElements = document.getElementsByTagName('div')
     for div in divElements:
-        # Find product-description div
         if div.hasAttribute('class') and "product-description" in div.getAttribute('class').split():
-            for childDiv in div.getElementsByTagName('div'):
-                matchingAttributes = True
-                # Find divs with empty attributes matching the description div
-                for attribute in ["data-espotname", "data-widgettype", "class"]:
-                    # Set to false if not all attributes match
-                    if not (childDiv.hasAttribute(attribute) and childDiv.getAttribute(attribute) == ""):
-                        matchingAttributes = False
-                # Search through the div
-                if matchingAttributes and childDiv.hasChildNodes():
-                    for node in childDiv.childNodes:
-                        # If there is plain text, add it to the description
-                        if node.nodeType == node.TEXT_NODE:
-                            productDescription += node.nodeValue
-                        # Check for tags
-                        elif node.nodeType == node.ELEMENT_NODE:
-                            # Add line breaks
-                            if node.tagName == "br":
-                                productDescription += "<br>"
-                            # Check for any lists
-                            elif node.tagName in ["ul", "ol"]:
-                                listElements = node.getElementsByTagName('li')
-                                productDescription += f"<{node.tagName}>"
-                                # Iterate through over list items
-                                for listItem in listElements:
-                                    if listItem.hasChildNodes():
-                                        productDescription += "<li>"
-                                        # Iterate over each list item
-                                        for innerNode in listItem.childNodes:
-                                            # Add text to product description
-                                            if innerNode.nodeType == innerNode.TEXT_NODE:
-                                                productDescription += innerNode.nodeValue
-                                        productDescription += "</li>"
-                                productDescription += f"</{node.tagName}>"  
-            productDescription = productDescription.strip()
+            getDescription(div, "DILLARD")
         elif div.hasAttribute('class') and div.getAttribute('class') == "starsWrapper":
             span = div.getElementsByTagName('span')[0]
             if span.hasChildNodes():
@@ -171,9 +130,9 @@ elif vendor == "dillards":
         if productDescription != "" and productRating != "":
             break
 else:
-    print("What?")
+    print("Invalid vendor")
 
-if productRating == "":
+if productRating == "": # No rating was found
     productRating = -1
 
 #print(f"Product Title: {productTitle}")
@@ -186,7 +145,6 @@ if productRating == "":
 #print(f"Price Length: {len(str(productPrice))}")
 #print(f"Image Length: {len(productImage)}")
 #print(f"Rating Length: {len(str(productRating))}")
-
 
 try:
     with open("config.json", 'r') as file:
