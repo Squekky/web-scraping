@@ -62,8 +62,8 @@
               border: none; 
             }
 
-            img {
-              width: 80%;
+            img.productimg {
+              height: 300px;
             }
 
             span.productname {
@@ -114,7 +114,7 @@
             <table class="topbar">
                 <tr>
                     <td class="home">
-                      <a href="./store.php">Ryan's Market</a>
+                      <a href="./store.php" class="home">Ryan's Market</a>
                     </td>
                 </tr>
             </table>
@@ -125,7 +125,6 @@
               $file = file_get_contents("../config.json");
               $json = json_decode($file, true);
               $cnx = new mysqli($json['Host'], $json['User'], $json['Password'], $json['Database']);
-
               if ($cnx->connect_error) {
                 die('Connection failed:' . $cnx->connect_error);
               }
@@ -144,7 +143,7 @@
                 $item_num = substr($row['productId'], 1);
                 echo '<td class="product">';
                 echo '<div class="product">';
-                echo '<img src="' . $row['productImage'] . '"/>';
+                echo '<img src="' . $row['productImage'] . '" class="productimg"/>';
                 echo '<br /><br />';
                 echo '<span class="productname">' . $row['productName'] . '</span>';
                 echo '<br /><br />';
