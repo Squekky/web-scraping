@@ -3,17 +3,33 @@ a {
 }
 
 a:link {
-    color: white;
+    color: black;
 }
 
 a:visited {
-    color: white;
+    color: black;
 }
 
 a:hover {
-    color: white;
+    color: rgb(0,0,165);
 }
 
 a:active {
+    color: blue;
+}
+
+a.home:link {
+    color: white;
+}
+
+a.home:visited {
+    color: white;
+}
+
+a.home:hover {
+    color: white;
+}
+
+a.home:active {
     color: rgb(173, 255, 255);
 }
